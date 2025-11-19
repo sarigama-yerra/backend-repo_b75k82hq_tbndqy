@@ -12,15 +12,42 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
+# ---------------------------------------------------------------------
+# Core schemas for Task Time Manager
+# ---------------------------------------------------------------------
+
+class Task(BaseModel):
+    """
+    Tasks collection schema
+    Collection name: "task"
+    """
+    title: str = Field(..., description="Task title")
+    description: Optional[str] = Field(None, description="Task details")
+    status: str = Field("active", description="active | archived | completed")
+    estimated_minutes: Optional[int] = Field(None, ge=0, description="Estimated effort in minutes")
+    labels: List[str] = Field(default_factory=list, description="Tags/labels for grouping")
+
+class Timeentry(BaseModel):
+    """
+    Time entries per task
+    Collection name: "timeentry"
+    """
+    task_id: str = Field(..., description="Related task ID (string form of ObjectId)")
+    start_time: Optional[datetime] = Field(None, description="Start time for running entry")
+    end_time: Optional[datetime] = Field(None, description="End time when stopped")
+    duration_sec: Optional[int] = Field(None, ge=0, description="Logged duration in seconds (for manual logs or after stop)")
+    note: Optional[str] = Field(None, description="Optional note or description for the time entry")
+    is_running: bool = Field(False, description="Whether the timer is currently running")
+    date: Optional[str] = Field(None, description="Logical date (YYYY-MM-DD) for grouping, optional")
+
+# ---------------------------------------------------------------------
+# Example schemas (kept for reference)
+# ---------------------------------------------------------------------
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
     name: str = Field(..., description="Full name")
     email: str = Field(..., description="Email address")
     address: str = Field(..., description="Address")
@@ -28,21 +55,8 @@ class User(BaseModel):
     is_active: bool = Field(True, description="Whether user is active")
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
     title: str = Field(..., description="Product title")
     description: Optional[str] = Field(None, description="Product description")
     price: float = Field(..., ge=0, description="Price in dollars")
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
